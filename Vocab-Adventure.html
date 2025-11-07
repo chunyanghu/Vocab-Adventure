@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词汇记忆游戏集合</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* 动态背景元素 */
+        .floating-words {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .floating-word {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 18px;
+            font-weight: bold;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 粒子效果 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: particle 8s infinite linear;
+        }
+        
+        @keyframes particle {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: slideDown 1s ease-out;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .game-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+        .game-card:nth-child(4) { animation-delay: 0.4s; }
+        .game-card:nth-child(5) { animation-delay: 0.5s; }
+        .game-card:nth-child(6) { animation-delay: 0.6s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-card:hover::before {
+            left: 100%;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        
+        .game-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .game-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .game-card strong {
+            color: #764ba2;
+        }
+        
+        .game-area {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .game-area.active {
+            display: block;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .card {
+            width: 200px;
+            height: 120px;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            margin: 10px;
+            position: relative;
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .card-back {
+            background: linear-gradient(45deg, #a8edea, #fed6e3);
+            transform: rotateY(180deg);
+        }
+        
+        .word-rain {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+            border-radius: 15px;
+        }
+        
+        .falling-word {
+            position: absolute;
+            background: #FFD700;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            animation: fall 8s linear infinite;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes fall {
+            from { top: -50px; }
+            to { top: 450px; }
+        }
+        
+        .quiz-container {
+            text-align: center;
+        }
+        
+        .question {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 10px;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .option {
+            padding: 15px;
+            background: #e6f3ff;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option:hover {
+            background: #d0e8ff;
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+        
+        .option.correct {
+            background: #90EE90;
+            border-color: #32CD32;
+        }
+        
+        .option.wrong {
+            background: #FFB6C1;
+            border-color: #DC143C;
+        }
+        
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #667eea;
+        }
+        
+        .typing-game {
+            text-align: center;
+        }
+        
+        .word-display {
+            font-size: 36px;
+            margin: 30px 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .typing-input {
+            font-size: 24px;
+            padding: 15px;
+            border: 3px solid #ccc;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .typing-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .typing-input.correct {
+            border-color: #32CD32;
+            background: #f0fff0;
+        }
+        
+        .typing-input.wrong {
+            border-color: #DC143C;
+            background: #fff0f0;
+        }
+        
+        .back-btn {
+            background: #6c757d;
+            margin-bottom: 20px;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* 词汇统计信息 */
+        .vocab-stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            animation: fadeIn 1.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景元素 -->
+    <div class="floating-words" id="floatingWords"></div>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎮 词汇记忆游戏集合 🎮</h1>
+            <p>选择你喜欢的游戏模式开始学习吧！</p>
+            <div class="vocab-stats">
+                <div class="stats-number" id="vocabCount">0</div>
+                <div>个精选词汇等你挑战</div>
+            </div>
+        </div>
+        
+        <div id="gameSelector" class="game-selector">
+            <div class="game-card" onclick="startGame('flashcard')">
+                <h3>🃏 翻卡记忆</h3>
+                <p>点击卡片查看单词和释义</p>
+                <p><strong>适合：</strong>个人复习</p>
+                <p><strong>难度：</strong>⭐⭐</p>
+            </div>
+            
+            <div class="game-card" onclick="startGame('wordrain')">
+                <h3>🌧️ 单词雨</h3>
+                <p>点击正确的中文释义</p>
+                <p><strong>适合：</strong>班级互动</p>
+                <p><strong>难度：</strong>⭐⭐⭐</p>
+            </div>
+            
+            <div class="game-card" onclick="startGame('quiz')">
+                <h3>🧠 选择题挑战</h3>
+                <p>选择正确的中文意思</p>
+                <p><strong>适合：</strong>个人测试</p>
+                <p><strong>难度：</strong>⭐⭐</p>
+            </div>
+            
+            <div class="game-card" onclick="startGame('typing')">
+                <h3>⌨️ 拼写练习</h3>
+                <p>根据中文输入英文单词</p>
+                <p><strong>适合：</strong>个人练习</p>
+                <p><strong>难度：</strong>⭐⭐⭐⭐</p>
+            </div>
+            
+            <div class="game-card" onclick="startGame('memory')">
+                <h3>🎯 记忆配对</h3>
+                <p>找到英文和中文的配对</p>
+                <p><strong>适合：</strong>个人挑战</p>
+                <p><strong>难度：</strong>⭐⭐⭐</p>
+            </div>
+            
+            <div class="game-card" onclick="startGame('rapid')">
+                <h3>⚡ 快速问答</h3>
+                <p>限时回答，适合抢答</p>
+                <p><strong>适合：</strong>班级竞赛</p>
+                <p><strong>难度：</strong>⭐⭐⭐⭐⭐</p>
+            </div>
+        </div>
+        
+        <!-- 翻卡记忆游戏 -->
+        <div id="flashcardGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>🃏 翻卡记忆游戏</h2>
+            <div class="progress-bar">
+                <div id="flashcardProgress" class="progress-fill"></div>
+            </div>
+            <div style="text-align: center;">
+                <div id="flashcard" class="card" onclick="flipCard()">
+                    <div class="card-front">
+                        <span id="cardFront">点击开始</span>
+                    </div>
+                    <div class="card-back">
+                        <span id="cardBack">准备好了吗？</span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn" onclick="nextCard()">下一张</button>
+                    <button class="btn" onclick="shuffleCards()">打乱顺序</button>
+                </div>
+                <div class="score">进度: <span id="flashcardScore">0/0</span></div>
+            </div>
+        </div>
+        
+        <!-- 单词雨游戏 -->
+        <div id="wordrainGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>🌧️ 单词雨游戏</h2>
+            <div class="score">得分: <span id="rainScore">0</span> | 生命: <span id="rainLives">3</span></div>
+            <div class="question">当前单词: <span id="rainWord">准备开始</span></div>
+            <div id="wordRain" class="word-rain"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" onclick="startWordRain()">开始游戏</button>
+                <button class="btn" onclick="pauseWordRain()">暂停</button>
+            </div>
+        </div>
+        
+        <!-- 选择题游戏 -->
+        <div id="quizGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>🧠 选择题挑战</h2>
+            <div class="quiz-container">
+                <div class="score">得分: <span id="quizScore">0</span>/10</div>
+                <div class="question">
+                    <span id="quizWord">ready</span>
+                </div>
+                <div class="options" id="quizOptions">
+                    <!-- 选项将动态生成 -->
+                </div>
+                <button class="btn" onclick="nextQuestion()">下一题</button>
+            </div>
+        </div>
+        
+        <!-- 拼写练习游戏 -->
+        <div id="typingGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>⌨️ 拼写练习</h2>
+            <div class="typing-game">
+                <div class="score">正确: <span id="typingScore">0</span> | 错误: <span id="typingErrors">0</span></div>
+                <div class="word-display" id="typingChinese">准备好的</div>
+                <input type="text" id="typingInput" class="typing-input" placeholder="输入英文单词" onkeyup="checkTyping(event)">
+                <div style="margin-top: 20px;">
+                    <button class="btn" onclick="skipWord()">跳过</button>
+                    <button class="btn" onclick="restartTyping()">重新开始</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 记忆配对游戏 -->
+        <div id="memoryGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>🎯 记忆配对游戏</h2>
+            <div class="score">配对成功: <span id="memoryScore">0</span> | 尝试次数: <span id="memoryAttempts">0</span></div>
+            <div id="memoryCards" class="cards-grid">
+                <!-- 卡片将动态生成 -->
+            </div>
+            <button class="btn" onclick="startMemoryGame()">开始新游戏</button>
+        </div>
+        
+        <!-- 快速问答游戏 -->
+        <div id="rapidGame" class="game-area">
+            <button class="btn back-btn" onclick="backToMenu()">← 返回主菜单</button>
+            <h2>⚡ 快速问答</h2>
+            <div class="quiz-container">
+                <div class="score">得分: <span id="rapidScore">0</span> | 时间: <span id="rapidTime">60</span>秒</div>
+                <div class="question">
+                    <span id="rapidWord">点击开始</span>
+                </div>
+                <div class="options" id="rapidOptions">
+                    <!-- 选项将动态生成 -->
+                </div>
+                <button class="btn" onclick="startRapidFire()">开始挑战</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 完整的词汇数据 - 包含您提供的所有词汇
+        const vocabulary = [
+            {english: "ready", chinese: "准备好的"},
+            {english: "textbook", chinese: "教科书"},
+            {english: "eraser", chinese: "橡皮"},
+            {english: "junior high", chinese: "初级中学"},
+            {english: "geography", chinese: "地理"},
+            {english: "biology", chinese: "生物"},
+            {english: "history", chinese: "历史"},
+            {english: "grey", chinese: "灰色的"},
+            {english: "jacket", chinese: "夹克"},
+            {english: "red scarf", chinese: "红领巾"},
+            {english: "T-shirt", chinese: "T恤衫"},
+            {english: "uniform", chinese: "制服"},
+            {english: "school uniform", chinese: "校服"},
+            {english: "of course", chinese: "当然"},
+            {english: "forget", chinese: "忘记"},
+            {english: "teaching building", chinese: "教学楼"},
+            {english: "dining hall", chinese: "食堂"},
+            {english: "together", chinese: "一起"},
+            {english: "lab", chinese: "实验室"},
+            {english: "start", chinese: "开始"},
+            {english: "each other", chinese: "互相"},
+            {english: "everyone", chinese: "每个人"},
+            {english: "explore", chinese: "探索"},
+            {english: "fun", chinese: "乐趣"},
+            {english: "introduce", chinese: "介绍"},
+            {english: "yourself", chinese: "你自己"},
+            {english: "hobby", chinese: "业余爱好"},
+            {english: "a bit", chinese: "有点儿"},
+            {english: "nervous", chinese: "紧张的"},
+            {english: "join", chinese: "加入"},
+            {english: "team", chinese: "队"},
+            {english: "take part in", chinese: "参加"},
+            {english: "without", chinese: "没有"},
+            {english: "sentence", chinese: "句子"},
+            {english: "point out", chinese: "指出"},
+            {english: "mistake", chinese: "错误"},
+            {english: "polite", chinese: "有礼貌的"},
+            {english: "mind", chinese: "头脑"},
+            {english: "hers", chinese: "她的"},
+            {english: "dry", chinese: "干的"},
+            {english: "meaning", chinese: "意思"},
+            {english: "fact", chinese: "事实"},
+            {english: "in fact", chinese: "事实上"},
+            {english: "need", chinese: "需要"},
+            {english: "remember", chinese: "记住"},
+            {english: "really", chinese: "确实地"},
+            {english: "important", chinese: "重要的"},
+            {english: "plan", chinese: "计划"},
+            {english: "problem", chinese: "问题"},
+            {english: "homework", chinese: "家庭作业"},
+            {english: "task", chinese: "任务"},
+            {english: "project", chinese: "课题"},
+            {english: "advice", chinese: "建议"},
+            {english: "journey", chinese: "旅行"},
+            {english: "something", chinese: "某物"},
+            {english: "thought", chinese: "想法"},
+            {english: "life", chinese: "生活"},
+            {english: "primary school", chinese: "小学"},
+            {english: "pool", chinese: "水塘"},
+            {english: "protect", chinese: "保护"},
+            {english: "wind", chinese: "风"},
+            {english: "wide", chinese: "宽的"},
+            {english: "sail", chinese: "驾驶船只"},
+            {english: "through", chinese: "穿过"},
+            {english: "storm", chinese: "暴风雨"},
+            {english: "towards", chinese: "朝着"},
+            {english: "hope", chinese: "希望"},
+            {english: "rock music", chinese: "摇滚乐"},
+            {english: "electric", chinese: "电动的"},
+            {english: "guitar", chinese: "吉他"},
+            {english: "band", chinese: "乐队"},
+            {english: "sound", chinese: "声音"},
+            {english: "different", chinese: "不同的"},
+            {english: "suddenly", chinese: "突然"},
+            {english: "hit", chinese: "使意识到"},
+            {english: "rush", chinese: "冲"},
+            {english: "festival", chinese: "节庆"},
+            {english: "decide", chinese: "决定"},
+            {english: "practice", chinese: "练习"},
+            {english: "stage", chinese: "舞台"},
+            {english: "nod", chinese: "点头"},
+            {english: "instrument", chinese: "乐器"},
+            {english: "everybody", chinese: "每个人"},
+            {english: "smile", chinese: "笑容"},
+            {english: "enjoy", chinese: "享受"},
+            {english: "skate", chinese: "滑冰"},
+            {english: "club", chinese: "俱乐部"},
+            {english: "volleyball", chinese: "排球"},
+            {english: "traditional", chinese: "传统的"},
+            {english: "paper-cutting", chinese: "剪纸"},
+            {english: "hold", chinese: "握住"},
+            {english: "ground", chinese: "地面"},
+            {english: "weak", chinese: "虚弱的"},
+            {english: "high", chinese: "高的"},
+            {english: "nature", chinese: "大自然"},
+            {english: "adventure", chinese: "历险"},
+            {english: "awake", chinese: "醒着的"},
+            {english: "midnight", chinese: "午夜"},
+            {english: "appear", chinese: "出现"},
+            {english: "heart", chinese: "心脏"},
+            {english: "almost", chinese: "几乎"},
+            {english: "tap", chinese: "轻拍"},
+            {english: "shake", chinese: "摇动"},
+            {english: "classmate", chinese: "同班同学"},
+            {english: "lonely", chinese: "孤单的"},
+            {english: "magic", chinese: "神奇的"},
+            {english: "joy", chinese: "喜悦"},
+            {english: "notebook", chinese: "笔记本"},
+            {english: "shelf", chinese: "架子"},
+            {english: "leave", chinese: "离开"},
+            {english: "page", chinese: "页"},
+            {english: "ending", chinese: "结局"},
+            {english: "silent", chinese: "不作声的"},
+            {english: "along", chinese: "沿着"},
+            {english: "mountain", chinese: "高山"},
+            {english: "road", chinese: "路"},
+            {english: "handsome", chinese: "英俊的"},
+            {english: "strict", chinese: "严格的"},
+            {english: "follow", chinese: "跟随"},
+            {english: "postman", chinese: "邮递员"},
+            {english: "touching", chinese: "感人的"},
+            {english: "son", chinese: "儿子"},
+            {english: "serve", chinese: "为...工作"},
+            {english: "area", chinese: "地区"},
+            {english: "absent", chinese: "缺席的"},
+            {english: "seldom", chinese: "很少"},
+            {english: "position", chinese: "职位"},
+            {english: "carry", chinese: "带至"},
+            {english: "across", chinese: "穿过"},
+            {english: "memory", chinese: "记忆"},
+            {english: "tear", chinese: "眼泪"},
+            {english: "growth", chinese: "成长"},
+            {english: "hide", chinese: "隐藏"},
+            {english: "care", chinese: "关心"},
+            {english: "hug", chinese: "拥抱"},
+            {english: "kiss", chinese: "吻"},
+            {english: "marry", chinese: "结婚"},
+            {english: "queen", chinese: "女王"},
+            {english: "pick up", chinese: "接载"},
+            {english: "actress", chinese: "女演员"},
+            {english: "change", chinese: "换"},
+            {english: "race", chinese: "比赛"},
+            {english: "serious", chinese: "严重的"},
+            {english: "disease", chinese: "疾病"},
+            {english: "stay", chinese: "停留"},
+            {english: "trailer", chinese: "拖车"},
+            {english: "pull", chinese: "拉"},
+            {english: "bright", chinese: "充满生气的"},
+            {english: "refuse", chinese: "拒绝"},
+            {english: "result", chinese: "结果"},
+            {english: "matter", chinese: "重要"},
+            {english: "power", chinese: "提供动力"}
+        ];
+
+        let currentGame = '';
+        let gameState = {};
+
+        // 初始化动态效果
+        function initDynamicEffects() {
+            // 显示词汇数量
+            document.getElementById('vocabCount').textContent = vocabulary.length;
+            
+            // 创建浮动单词
+            createFloatingWords();
+            
+            // 创建粒子效果
+            createParticles();
+            
+            // 数字动画
+            animateNumber();
+        }
+
+        function createFloatingWords() {
+            const container = document.getElementById('floatingWords');
+            const words = vocabulary.slice(0, 20); // 取前20个单词
+            
+            words.forEach((word, index) => {
+                setTimeout(() => {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'floating-word';
+                    wordElement.textContent = word.english;
+                    wordElement.style.left = Math.random() * 100 + '%';
+                    wordElement.style.animationDelay = Math.random() * 15 + 's';
+                    container.appendChild(wordElement);
+                    
+                    // 15秒后移除并创建新的
+                    setTimeout(() => {
+                        if (wordElement.parentNode) {
+                            wordElement.remove();
+                        }
+                        // 创建新的浮动单词
+                        const newWord = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+                        const newElement = document.createElement('div');
+                        newElement.className = 'floating-word';
+                        newElement.textContent = newWord.english;
+                        newElement.style.left = Math.random() * 100 + '%';
+                        container.appendChild(newElement);
+                    }, 15000);
+                }, index * 500);
+            });
+        }
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 8 + 's';
+                    container.appendChild(particle);
+                    
+                    // 8秒后移除并创建新的
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.remove();
+                        }
+                        const newParticle = document.createElement('div');
+                        newParticle.className = 'particle';
+                        newParticle.style.left = Math.random() * 100 + '%';
+                        container.appendChild(newParticle);
+                    }, 8000);
+                }, i * 100);
+            }
+        }
+
+        function animateNumber() {
+            const numberElement = document.getElementById('vocabCount');
+            const targetNumber = vocabulary.length;
+            let currentNumber = 0;
+            const increment = Math.ceil(targetNumber / 50);
+            
+            const timer = setInterval(() => {
+                currentNumber += increment;
+                if (currentNumber >= targetNumber) {
+                    currentNumber = targetNumber;
+                    clearInterval(timer);
+                }
+                numberElement.textContent = currentNumber;
+            }, 50);
+        }
+
+        // 游戏选择
+        function startGame(gameType) {
+            document.getElementById('gameSelector').style.display = 'none';
+            document.querySelectorAll('.game-area').forEach(area => {
+                area.classList.remove('active');
+            });
+            
+            currentGame = gameType;
+            
+            switch(gameType) {
+                case 'flashcard':
+                    document.getElementById('flashcardGame').classList.add('active');
+                    initFlashcardGame();
+                    break;
+                case 'wordrain':
+                    document.getElementById('wordrainGame').classList.add('active');
+                    initWordRainGame();
+                    break;
+                case 'quiz':
+                    document.getElementById('quizGame').classList.add('active');
+                    initQuizGame();
+                    break;
+                case 'typing':
+                    document.getElementById('typingGame').classList.add('active');
+                    initTypingGame();
+                    break;
+                case 'memory':
+                    document.getElementById('memoryGame').classList.add('active');
+                    initMemoryGame();
+                    break;
+                case 'rapid':
+                    document.getElementById('rapidGame').classList.add('active');
+                    initRapidGame();
+                    break;
+            }
+        }
+
+        function backToMenu() {
+            document.querySelectorAll('.game-area').forEach(area => {
+                area.classList.remove('active');
+            });
+            document.getElementById('gameSelector').style.display = 'grid';
+            
+            // 清理游戏状态
+            if (gameState.wordRainInterval) {
+                clearInterval(gameState.wordRainInterval);
+            }
+            if (gameState.rapidTimer) {
+                clearInterval(gameState.rapidTimer);
+            }
+        }
+
+        // 翻卡记忆游戏
+        function initFlashcardGame() {
+            gameState.flashcardIndex = 0;
+            gameState.flashcardWords = [...vocabulary];
+            updateFlashcard();
+        }
+
+        function updateFlashcard() {
+            const word = gameState.flashcardWords[gameState.flashcardIndex];
+            document.getElementById('cardFront').textContent = word.english;
+            document.getElementById('cardBack').textContent = word.chinese;
+            document.getElementById('flashcardScore').textContent = 
+                `${gameState.flashcardIndex + 1}/${gameState.flashcardWords.length}`;
+            
+            const progress = ((gameState.flashcardIndex + 1) / gameState.flashcardWords.length) * 100;
+            document.getElementById('flashcardProgress').style.width = progress + '%';
+            
+            // 重置卡片状态
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            gameState.flashcardIndex = (gameState.flashcardIndex + 1) % gameState.flashcardWords.length;
+            updateFlashcard();
+        }
+
+        function shuffleCards() {
+            gameState.flashcardWords = gameState.flashcardWords.sort(() => Math.random() - 0.5);
+            gameState.flashcardIndex = 0;
+            updateFlashcard();
+        }
+
+        // 单词雨游戏
+        function initWordRainGame() {
+            gameState.rainScore = 0;
+            gameState.rainLives = 3;
+            gameState.rainCurrentWord = null;
+            gameState.rainWords = [...vocabulary];
+            gameState.rainActive = false;
+            updateRainDisplay();
+        }
+
+        function startWordRain() {
+            if (gameState.rainActive) return;
+            
+            gameState.rainActive = true;
+            gameState.rainCurrentWord = gameState.rainWords[Math.floor(Math.random() * gameState.rainWords.length)];
+            document.getElementById('rainWord').textContent = gameState.rainCurrentWord.english;
+            
+            gameState.wordRainInterval = setInterval(createFallingWord, 2000);
+        }
+
+        function createFallingWord() {
+            if (!gameState.rainActive) return;
+            
+            const wordRain = document.getElementById('wordRain');
+            const fallingWord = document.createElement('div');
+            fallingWord.className = 'falling-word';
+            
+            // 随机选择正确答案或错误答案
+            const isCorrect = Math.random() < 0.3; // 30%概率是正确答案
+            if (isCorrect) {
+                fallingWord.textContent = gameState.rainCurrentWord.chinese;
+                fallingWord.dataset.correct = 'true';
+            } else {
+                const wrongAnswer = gameState.rainWords[Math.floor(Math.random() * gameState.rainWords.length)];
+                fallingWord.textContent = wrongAnswer.chinese;
+                fallingWord.dataset.correct = 'false';
+            }
+            
+            fallingWord.style.left = Math.random() * (wordRain.offsetWidth - 100) + 'px';
+            fallingWord.onclick = () => checkRainAnswer(fallingWord);
+            
+            wordRain.appendChild(fallingWord);
+            
+            // 8秒后移除（如果还在）
+            setTimeout(() => {
+                if (fallingWord.parentNode) {
+                    if (fallingWord.dataset.correct === 'true') {
+                        gameState.rainLives--;
+                        updateRainDisplay();
+                        if (gameState.rainLives <= 0) {
+                            endWordRain();
+                        }
+                    }
+                    fallingWord.remove();
+                }
+            }, 8000);
+        }
+
+        function checkRainAnswer(element) {
+            if (element.dataset.correct === 'true') {
+                gameState.rainScore++;
+                element.style.background = '#90EE90';
+                // 下一个单词
+                gameState.rainCurrentWord = gameState.rainWords[Math.floor(Math.random() * gameState.rainWords.length)];
+                document.getElementById('rainWord').textContent = gameState.rainCurrentWord.english;
+            } else {
+                gameState.rainLives--;
+                element.style.background = '#FFB6C1';
+            }
+            
+            updateRainDisplay();
+            element.remove();
+            
+            if (gameState.rainLives <= 0) {
+                endWordRain();
+            }
+        }
+
+        function updateRainDisplay() {
+            document.getElementById('rainScore').textContent = gameState.rainScore;
+            document.getElementById('rainLives').textContent = gameState.rainLives;
+        }
+
+        function pauseWordRain() {
+            gameState.rainActive = false;
+            if (gameState.wordRainInterval) {
+                clearInterval(gameState.wordRainInterval);
+            }
+        }
+
+        function endWordRain() {
+            pauseWordRain();
+            alert(`游戏结束！最终得分：${gameState.rainScore}`);
+        }
+
+        // 选择题游戏
+        function initQuizGame() {
+            gameState.quizScore = 0;
+            gameState.quizIndex = 0;
+            gameState.quizWords = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 10);
+            showQuizQuestion();
+        }
+
+        function showQuizQuestion() {
+            if (gameState.quizIndex >= gameState.quizWords.length) {
+                alert(`测试完成！得分：${gameState.quizScore}/${gameState.quizWords.length}`);
+                return;
+            }
+            
+            const currentWord = gameState.quizWords[gameState.quizIndex];
+            document.getElementById('quizWord').textContent = currentWord.english;
+            
+            // 生成选项
+            const options = [currentWord.chinese];
+            while (options.length < 4) {
+                const randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+                if (!options.includes(randomWord.chinese)) {
+                    options.push(randomWord.chinese);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectQuizOption(optionElement, option === currentWord.chinese);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('quizScore').textContent = gameState.quizScore;
+        }
+
+        function selectQuizOption(element, isCorrect) {
+            // 禁用所有选项
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.onclick = null;
+                if (opt.textContent === gameState.quizWords[gameState.quizIndex].chinese) {
+                    opt.classList.add('correct');
+                } else if (opt === element && !isCorrect) {
+                    opt.classList.add('wrong');
+                }
+            });
+            
+            if (isCorrect) {
+                gameState.quizScore++;
+            }
+            
+            document.getElementById('quizScore').textContent = gameState.quizScore;
+        }
+
+        function nextQuestion() {
+            gameState.quizIndex++;
+            showQuizQuestion();
+        }
+
+        // 拼写练习游戏
+        function initTypingGame() {
+            gameState.typingScore = 0;
+            gameState.typingErrors = 0;
+            gameState.typingIndex = 0;
+            gameState.typingWords = [...vocabulary].sort(() => Math.random() - 0.5);
+            showTypingWord();
+        }
+
+        function showTypingWord() {
+            if (gameState.typingIndex >= gameState.typingWords.length) {
+                alert(`练习完成！正确：${gameState.typingScore}，错误：${gameState.typingErrors}`);
+                return;
+            }
+            
+            const currentWord = gameState.typingWords[gameState.typingIndex];
+            document.getElementById('typingChinese').textContent = currentWord.chinese;
+            document.getElementById('typingInput').value = '';
+            document.getElementById('typingInput').className = 'typing-input';
+            document.getElementById('typingInput').focus();
+        }
+
+        function checkTyping(event) {
+            const input = event.target;
+            const currentWord = gameState.typingWords[gameState.typingIndex];
+            
+            if (event.key === 'Enter') {
+                if (input.value.toLowerCase().trim() === currentWord.english.toLowerCase()) {
+                    gameState.typingScore++;
+                    input.classList.add('correct');
+                    setTimeout(() => {
+                        gameState.typingIndex++;
+                        showTypingWord();
+                        updateTypingScore();
+                    }, 1000);
+                } else {
+                    gameState.typingErrors++;
+                    input.classList.add('wrong');
+                    setTimeout(() => {
+                        input.classList.remove('wrong');
+                        input.value = '';
+                        updateTypingScore();
+                    }, 1000);
+                }
+            }
+        }
+
+        function updateTypingScore() {
+            document.getElementById('typingScore').textContent = gameState.typingScore;
+            document.getElementById('typingErrors').textContent = gameState.typingErrors;
+        }
+
+        function skipWord() {
+            gameState.typingIndex++;
+            showTypingWord();
+        }
+
+        function restartTyping() {
+            initTypingGame();
+        }
+
+        // 记忆配对游戏
+        function initMemoryGame() {
+            gameState.memoryScore = 0;
+            gameState.memoryAttempts = 0;
+            gameState.memoryCards = [];
+            gameState.memoryFlipped = [];
+            gameState.memoryMatched = [];
+        }
+
+        function startMemoryGame() {
+            initMemoryGame();
+            
+            // 选择8对单词
+            const selectedWords = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
+            gameState.memoryCards = [];
+            
+            selectedWords.forEach((word, index) => {
+                gameState.memoryCards.push({type: 'english', text: word.english, pair: index});
+                gameState.memoryCards.push({type: 'chinese', text: word.chinese, pair: index});
+            });
+            
+            gameState.memoryCards.sort(() => Math.random() - 0.5);
+            
+            const container = document.getElementById('memoryCards');
+            container.innerHTML = '';
+            
+            gameState.memoryCards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.innerHTML = `
+                    <div class="card-front">?</div>
+                    <div class="card-back">${card.text}</div>
+                `;
+                cardElement.onclick = () => flipMemoryCard(index);
+                container.appendChild(cardElement);
+            });
+            
+            updateMemoryScore();
+        }
+
+        function flipMemoryCard(index) {
+            if (gameState.memoryFlipped.length >= 2 || 
+                gameState.memoryFlipped.includes(index) || 
+                gameState.memoryMatched.includes(index)) {
+                return;
+            }
+            
+            const cardElement = document.getElementById('memoryCards').children[index];
+            cardElement.classList.add('flipped');
+            gameState.memoryFlipped.push(index);
+            
+            if (gameState.memoryFlipped.length === 2) {
+                gameState.memoryAttempts++;
+                setTimeout(checkMemoryMatch, 1000);
+            }
+        }
+
+        function checkMemoryMatch() {
+            const [first, second] = gameState.memoryFlipped;
+            const firstCard = gameState.memoryCards[first];
+            const secondCard = gameState.memoryCards[second];
+            
+            if (firstCard.pair === secondCard.pair) {
+                // 匹配成功
+                gameState.memoryMatched.push(first, second);
+                gameState.memoryScore++;
+                
+                if (gameState.memoryMatched.length === gameState.memoryCards.length) {
+                    alert(`恭喜完成！配对成功：${gameState.memoryScore}，尝试次数：${gameState.memoryAttempts}`);
+                }
+            } else {
+                // 匹配失败，翻回去
+                document.getElementById('memoryCards').children[first].classList.remove('flipped');
+                document.getElementById('memoryCards').children[second].classList.remove('flipped');
+            }
+            
+            gameState.memoryFlipped = [];
+            updateMemoryScore();
+        }
+
+        function updateMemoryScore() {
+            document.getElementById('memoryScore').textContent = gameState.memoryScore;
+            document.getElementById('memoryAttempts').textContent = gameState.memoryAttempts;
+        }
+
+        // 快速问答游戏
+        function initRapidGame() {
+            gameState.rapidScore = 0;
+            gameState.rapidTime = 60;
+            gameState.rapidIndex = 0;
+            gameState.rapidWords = [...vocabulary].sort(() => Math.random() - 0.5);
+            gameState.rapidActive = false;
+        }
+
+        function startRapidFire() {
+            if (gameState.rapidActive) return;
+            
+            gameState.rapidActive = true;
+            gameState.rapidTimer = setInterval(() => {
+                gameState.rapidTime--;
+                document.getElementById('rapidTime').textContent = gameState.rapidTime;
+                
+                if (gameState.rapidTime <= 0) {
+                    endRapidFire();
+                }
+            }, 1000);
+            
+            showRapidQuestion();
+        }
+
+        function showRapidQuestion() {
+            if (!gameState.rapidActive) return;
+            
+            const currentWord = gameState.rapidWords[gameState.rapidIndex % gameState.rapidWords.length];
+            document.getElementById('rapidWord').textContent = currentWord.english;
+            
+            // 生成选项
+            const options = [currentWord.chinese];
+            while (options.length < 4) {
+                const randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+                if (!options.includes(randomWord.chinese)) {
+                    options.push(randomWord.chinese);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            const optionsContainer = document.getElementById('rapidOptions');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectRapidOption(option === currentWord.chinese);
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+
+        function selectRapidOption(isCorrect) {
+            if (isCorrect) {
+                gameState.rapidScore++;
+                document.getElementById('rapidScore').textContent = gameState.rapidScore;
+            }
+            
+            gameState.rapidIndex++;
+            showRapidQuestion();
+        }
+
+        function endRapidFire() {
+            gameState.rapidActive = false;
+            clearInterval(gameState.rapidTimer);
+            alert(`时间到！最终得分：${gameState.rapidScore}`);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initDynamicEffects();
+        });
+    </script>
+</body>
+</html>
